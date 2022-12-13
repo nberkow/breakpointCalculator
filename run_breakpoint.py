@@ -1,12 +1,15 @@
-from BreakpointPlotMaker import BreakpointPlotMaker
+from BreakpointInputHandler import BreakpointInputHandler
 from PartitionFinder import PartitionFinder
 
 if __name__ == "__main__":
-    pf = PartitionFinder()
+
+    input_handler = BreakpointInputHandler()
+    input_handler.load_file("data1.csv")
+    
 
     params = {
-        "mr1"    : 1/(-1),   # lower MIC breakpoint
-        "mr2"    :  1/(1),   # upper MIC breakpoint
+        "mr1"    : -1,   # lower MIC breakpoint
+        "mr2"    :  1,   # upper MIC breakpoint
         "M1"     :  4,   # weight for very major error penalty
         "VM1"    :  4,   # weight for major error penalty
         "m1"     :  1,   # weight for minor error penalty
@@ -16,12 +19,15 @@ if __name__ == "__main__":
         "delim"  : ","   # infile delimiter
     }
 
-    pf.params = params
-    pf.load_file("data1.csv")
-    #pf.scan_breakpoints()
-    print(pf.compute_succeptability_categories(35.0, 39.0))
+    pf = PartitionFinder(params)
+    a, b = 34, 39
+    
+    counts = pf.compute_succeptability_categories(input_handler.value_pairs, a, b)
+    for c in counts:
+        print(f"{c}\t{counts[c]}")
 
-    bpm = BreakpointPlotMaker()
-    desnity_plot = bpm.make_desnity_plot(pf.get_density_grid())
+
+    #bpm = BreakpointPlotMaker()
+    #desnity_plot = bpm.make_desnity_plot(pf.get_density_grid())
 
 

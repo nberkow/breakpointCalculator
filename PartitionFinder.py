@@ -7,139 +7,94 @@ class PartitionFinder:
     Find the dilution breakpoints for a disc diffusion resistance experiment
 
     main inputs: 
-        - 2 column data sets with paired "MIC" (gold standard) and "DIA" (experimental) values
-        - two thresholds (breakpoints) for susceptability and resistance
+        - 2 column data sets with paired "MIC" (gold standard) and "DIA" (clinical) values
+        - two MIC thresholds (breakpoints) for susceptability and resistance
 
     outputs:
         - 2 DIA breakpoint values corresponding to the 2 MIC values
-        - scatterplot data
     
     """
 
-    def __init__(self):
+    def __init__(self, params):
 
-        self.params = {}
-        
+        self.params = params
 
-        self.mic = []
-        self.dia = []
-        
-        self.val_pair_counts = {} # keep track of the number of times a dia/mic pair occurs
 
-    def load_file(self, path):
-
-        transform_mic = False
-        with open(path) as mic_dia_file:
-            mic_dia_file.readline()
-            for md in mic_dia_file:
-                m, d = md.rstrip().split(self.params['delim'])
-                m = float(m)
-                if transform_mic:
-                    m = 1/(2**m)
-                d = float(d)
-                self.mic.append(m)
-                self.dia.append(d)
-                if not (m,d) in self.val_pair_counts:
-                    self.val_pair_counts[(m,d)] = 0
-                self.val_pair_counts[(m,d)] += 1
-
-    def compute_succeptability_categories(self, zr, zs):
+    def compute_succeptability_categories(self, score_pairs, dia_br1, dia_br2):
 
         """
-        There are 9 succeptability categories based on MIC and DIA
-        they come from the possible combinations of MIC and DIA.
+        input:
+        -   score_pairs: dictionary of MIC, DIA score pairs. Values are counts for that pair
+        -   dia_br1: lower DIA breakpoint
+        -   dia_br2: upper DIA breakpoint
 
-        for example if the MIC value is less than the lower MIC breakpoint:
+        The MIC breakpoints are also required to be set in self.params
 
-            MIC < mr1
-        
-        and the the DIA is less than zs, some breakpoint value being tested
+        output:
+        -   category_counts: dict of all possible zones. values are counts of
+        points falling into each zone.
 
-            DIA < zr
+        description:
+            The MIC and DIA breakpoints divide the data into 9 zones.
 
-        then both values agree that the classification is "resisistant"
+                            DIA
+            MIC             S | I | R     
+            susceptible     x |   |
+            intermediate      | x |
+            resistant         |   | x 
 
-        when they disagree, the classification is a major error, minor error or very major error
-
+            Additionally, scores are weighted differently depending on how far outside 
+            of the expected zone they fall. Count them separately if they are off
+            by more than the width of the intermediate zone.
         """
 
-        scores = {
-            "resistant"        : 0,
-            "susceptible"      : 0,
-            "very_major_error" : 0,  # false susceptible
-            "major_error"      : 0,  # false resistant
-            "minor_error"      : 0   # one reading is resistant or susceptible, the other is intermediate
-        }
+        category_counts = {}
 
-        mic_range = self.params['mr2'] - self.params['mr1'] 
+        mic_range = self.params['mr2'] - self.params['mr1'] - 1
 
-        for i in range(len(self.mic)):
-            mic_val = self.mic[i]
-            dia_val = self.dia[i]
-
-            if mic_val + mic_range <= self.params['mr1'] or mic_val - mic_range > self.params['mr2']:
-                w_m = self.params['m2']
-                w_M = self.params['M2']              
-                w_VM = self.params['VM2']
-            else:
-                w_m = self.params['m1']
-                w_M = self.params['M1']              
-                w_VM = self.params['VM1']
+        for p in score_pairs:
+            mic_val, dia_val = p
+            score_pair_count = score_pairs[p]
+            weight_type = "r" # within one MIC range, R for outside
 
             # susceptible according to MIC
-            if mic_val > self.params['mr2']:
-            
-
-                #print(f"{mic_val}\t{dia_val}\tS")
-
-                # agree on susceptible
-                if dia_val <= zr:
-                    scores["susceptible"] += 1
-
-                # minor error
-                elif dia_val > zr and dia_val <= zs:
-                    scores["minor_error"] += w_m
-
-                # false resistant
-                elif dia_val > zs:
-                    scores["major_error"] += w_M
+            mic_prefix = "ERR"
+            if mic_val >= self.params['mr2']:
+                mic_prefix = 'S'
+                if mic_val >= (self.params['mr2'] + mic_range):
+                    weight_type = 'R'
 
             # intermediate according to MIC
             elif mic_val > self.params['mr1'] and mic_val <= self.params['mr2']:
-
-                #print(f"{mic_val}\t{dia_val}\tI")
-
-                # minor error
-                if dia_val <= zr:
-                    scores["minor_error"] += w_m
-
-                # agree on intermediate (not used in calc)
-                elif dia_val > zr and dia_val <= zs:
-                    pass
-
-                # minor error
-                elif dia_val > zs:
-                    scores["minor_error"] += w_m
+                mic_prefix = 'I'
 
             # resistant according to MIC
             elif mic_val <= self.params['mr1']:
+                mic_prefix = 'R'
+                if mic_val <= (self.params['mr1'] - mic_range):
+                    weight_type = 'R'
 
-                #print(f"{mic_val}\t{dia_val}\tR")
+            # susceptible according to DIA
+            dia_prefix = "ERR"
+            if dia_val <= dia_br1:
+                dia_prefix = 'S'
 
-                # false susceptible
-                if dia_val <= zr:
-                    scores["very_major_error"] += w_VM
+            # intermediate according to DIA
+            elif dia_val > dia_br1 and dia_val < dia_br2:
+                dia_prefix = 'I'
 
-                # minor error
-                elif dia_val > zr and dia_val <= zs:
-                    scores["minor_error"] += w_m
+            # resistant according to DIA
+            elif dia_val >= dia_br2:
+                dia_prefix = 'R'
 
-                # agree on resistant
-                elif dia_val > zs:
-                    scores["resistant"] += 1
-            
-        return(scores)
+            category = (mic_prefix, dia_prefix, weight_type)
+            if not category in category_counts:
+                category_counts[category] = 0    
+            category_counts[category] += score_pair_count
 
+        return(category_counts)         
+
+  
     def scan_breakpoints(self):
 
         # get a unique sorted list of possible breakpoints
@@ -159,29 +114,6 @@ class PartitionFinder:
                     best_pair = (candidate_breakpoints[i], candidate_breakpoints[j])
                     best_index = breakpoint_index
         print(best_pair)
-
-    def get_density_grid(self):
-
-        mic_val_range =  sorted(list(set(self.mic)))
-        dia_val_range =  sorted(list(set(self.dia)))
-        grid = []
-        
-        #for k in self.val_pair_counts:
-        #    print(f"{k[0]}\t{k[1]}\t{self.val_pair_counts[k]}")
-
-        i = 0
-        mic_val_range.reverse()
-        for m in mic_val_range:
-            grid.append([])
-            for d in dia_val_range:
-
-                if (m,d) in self.val_pair_counts:
-                    grid[i].append(self.val_pair_counts[(m,d)])
-                else:
-                    grid[i].append('')
-            i+=1
-            
-        return(grid, mic_val_range, dia_val_range)
 
         
 
