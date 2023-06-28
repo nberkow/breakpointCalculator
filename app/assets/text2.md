@@ -1,0 +1,1 @@
+A grid will appear below. The experiment looks for "breakpoint" concentrations that define resistence. Breakpoints are determined using a highly sensitive dilution series assay. However a more scalable disk diffusion experiment is used clinically. This analysis translates dilution (MIC) breakpoints into disk diffusion diameter (DIA) breakpoints.  

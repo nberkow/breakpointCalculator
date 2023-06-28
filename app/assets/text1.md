@@ -1,0 +1,1 @@
+This tool helps scientists analyze experiments about antibiotic resistence. Try entering this sample file:

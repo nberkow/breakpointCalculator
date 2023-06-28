@@ -1,0 +1,1 @@
+The analysis works by checking every possible pair of breakpoints and finding the pair that produces the fewest errors. The breakpoints define three zones: blue (resistant), red (susceptible) and yellow (ambiguous). Values in the white areas are consistent between MIC and DIA. The values in grey and pink areas are considered errors for this set of breakpoints.

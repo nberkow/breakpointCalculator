@@ -1,0 +1,1 @@
+This slider lets users set the MIC breakpoints. By convention -1 is the breakpoint for suceptibility and 1 is the breakpoint for resistance. However this is not garanteed for every experiment.  Adjust the slider to match the experiment's conventions.
