@@ -23,31 +23,31 @@ slider = dcc.RangeSlider( id='mic-range-slider', step=1,
     min=-10, max=10, value=[params["mr1"], params["mr2"]])
 
 app = Dash(__name__)
+server = app.server
 
 app.layout = html.Div([
     html.Div([
         html.Div(html.Img(src="assets/breakpoint_logo.png"), style={'display': 'inline-block'}),
         html.Div(html.H1("Resistance Calculator"), style={'display': 'inline-block'})]),
-    dcc.Upload(
-        id='upload-file',
-        children=html.Div([
-            'Drag and Drop or ',
-            html.A('Select Files')
-        ]),
-        
-        style={
-            'width': '50%',
-            'height': '60px',
-            'lineHeight': '60px',
-            'borderWidth': '1px',
-            'borderStyle': 'dashed',
-            'borderRadius': '5px',
-            'textAlign': 'center',
-            'margin': '10px'
-        },
-        multiple=False),
         dcc.Markdown(open("assets/text1.md").read()),
         html.A("data1.csv", href="assets/data1.csv"),
+        dcc.Upload(
+            id='upload-file',
+            children=html.Div([
+                'Drag and Drop or ',
+                html.A('Select Files')
+            ]),
+            style={
+                'width': '50%',
+                'height': '60px',
+                'lineHeight': '60px',
+                'borderWidth': '1px',
+                'borderStyle': 'dashed',
+                'borderRadius': '5px',
+                'textAlign': 'center',
+                'margin': '10px'
+            },
+        multiple=False),
         dcc.Markdown(open("assets/text2.md").read()),
         html.Div(id='table-container'),
         dcc.Markdown(open("assets/text3.md").read()),
@@ -99,5 +99,5 @@ def make_table_and_plot(input_handler):
     breakpoint_plot = plot_maker.build_plot(input_handler, breakpoints_by_score)
     return([breakpoint_table, breakpoint_plot])
 
-if __name__ == '__main__':
-    app.run_server(debug=True)
+#if __name__ == '__main__':
+#    app.run_server(debug=True)
