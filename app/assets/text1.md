@@ -1,1 +1,1 @@
-This tool helps scientists analyze experiments about antibiotic resistence. Try dowloading this sample file and selecting it in the box below:
+This tool helps scientists analyze experiments about antibiotic resistance. Try downloading this sample file and selecting it in the box below:
