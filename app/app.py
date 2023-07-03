@@ -52,9 +52,10 @@ app.layout = html.Div([
         html.Div(id='table-container'),
         dcc.Markdown(open("assets/text3.md").read()),
         dcc.Graph(id='scatter-plot'),
-        dcc.Markdown(open("assets/text4.md").read()),
+        dcc.Markdown(open("assets/text4.md").read()),       
+        dcc.Markdown(open("assets/text5.md").read()),
         slider,
-        dcc.Markdown(open("assets/text5.md").read())
+        dcc.Markdown(open("assets/text6.md").read())
         ])
 
 @app.callback([
